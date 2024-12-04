@@ -1,5 +1,4 @@
 ---
-layout: categories
-icon: fas fa-tasks
+icon: fas  fa-graduation-cap
 order: 1
 ---
